@@ -1,31 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Gallery from './Gallery'
 import SearchBar from './SearchBar'
 import { createResource as fetchData } from './helper'
 
 
 const App = () => {
-  let [search, setSearch] = useState('')
+  let [searchTerm, setSearch] = useState('')
   let [message, setMessage] = useState('Search for Music!')
-  let [data, setData] = useState([])
+  let [data, setData] = useState(null)
 
-  const API_URL = 'https://itunes.apple.com/search?term='
+
+
 
   useEffect(() => {
-      if(search) {
-          const fetchData = async () => {
-              document.title = `${search} music`
-              const response = await fetch(API_URL + search)
-              const resData = await response.json()
-              if (resData.results.length > 0) {
-                  return setData(resData.results)
-              } else {
-                  return setMessage('Not Found.')
-              }
-          }
-          fetchData()
-      }
-  }, [search])
+    if (searchTerm) {
+        setData(fetchData(searchTerm))
+    }
+}, [searchTerm])
+
+const renderGallery = () => {
+    if(data) {
+        return (
+            <Suspense fallback={<Spinner />}>
+                <Gallery data={data} />
+            </Suspense>
+        )
+    }
+}
+
 
   const handleSearch = (e, term) => {
       e.preventDefault()
@@ -33,12 +35,14 @@ const App = () => {
   }
 
   return (
-      <div style={{background:'black', color:'white', fontSize:'25px', flex:1, textAlign:'center'}}>
-          <SearchBar handleSearch={handleSearch} />
-          {message}
-          <Gallery data={data} />
-      </div>
-  )
+    <div style={{background:'black', color:'white', fontSize:'25px', flex:1, textAlign:'center'}}>
+        <SearchBar handleSearch={handleSearch} />
+        {message}
+        {renderGallery()}
+    </div>
+)
+
+
 }
 
 export default App
